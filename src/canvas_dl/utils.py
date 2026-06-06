@@ -20,25 +20,68 @@ def mask_token(text: str | None) -> str:
     return text[:4] + "…" + text[-4:]
 
 
+# Windows reserved device names (case-insensitive, with or without extension).
+_WIN_RESERVED = {
+    "con", "prn", "aux", "nul",
+    *(f"com{i}" for i in range(1, 10)),
+    *(f"lpt{i}" for i in range(1, 10)),
+}
+
+
 def sanitize_filename(name: str, max_length: int = 150) -> str:
-    # Remove control characters and forbidden path separators
+    """Make ``name`` safe to use as a single path component on every OS.
+
+    Removes control chars, replaces characters forbidden on Windows
+    (``<>:"/\\|?*``), collapses whitespace, strips trailing dots/spaces, and
+    guards against reserved device names. Returns ``""`` for empty input so
+    callers can apply their own fallback.
+    """
+    # Collapse all whitespace (tabs/newlines included) to single spaces first,
+    # so a tab between words becomes a space rather than vanishing.
+    name = re.sub(r"\s+", " ", name)
+    # Remove any remaining control characters.
     name = re.sub(r"[\x00-\x1f\x7f]", "", name)
-    name = name.replace("/", "-").replace("\\", "-")
-    # Collapse whitespace
-    name = re.sub(r"\s+", " ", name).strip()
-    # Limit length but keep extension
+    # Replace characters that are invalid in Windows (and awkward elsewhere).
+    name = re.sub(r'[<>:"/\\|?*]', "-", name)
+    name = name.strip()
+    # Windows forbids trailing dots/spaces in a path component.
+    name = name.rstrip(" .")
+    if not name:
+        return ""
+    # Avoid reserved device names (prefix to disambiguate).
+    stem = name.split(".", 1)[0].lower()
+    if stem in _WIN_RESERVED:
+        name = "_" + name
+    # Limit length but keep the extension when there is room for it.
     if len(name) > max_length:
         if "." in name:
             base, ext = name.rsplit(".", 1)
             keep = max_length - len(ext) - 1
-            name = base[:keep] + "." + ext
+            if keep >= 1:
+                name = base[:keep] + "." + ext
+            else:
+                # Extension alone doesn't fit the budget; just hard-truncate.
+                name = name[:max_length]
         else:
             name = name[:max_length]
+        name = name.rstrip(" .")
     return name
 
 
 def ensure_dir(path: Path) -> None:
     path.mkdir(parents=True, exist_ok=True)
+
+
+def restrict_permissions(path: Path) -> None:
+    """Best-effort: make a file readable/writable by the owner only (0600).
+
+    No-op on platforms/filesystems that don't support POSIX modes (e.g. some
+    Windows setups), where it fails silently.
+    """
+    try:
+        path.chmod(0o600)
+    except (OSError, NotImplementedError):
+        pass
 
 
 def get_app_dirs() -> PlatformDirs:

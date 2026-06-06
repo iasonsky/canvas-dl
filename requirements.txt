@@ -2,7 +2,9 @@ httpx
 rich
 python-dotenv
 tenacity
-
 typer
 questionary
 platformdirs
+pypdf
+fpdf2
+customtkinter

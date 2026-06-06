@@ -18,7 +18,7 @@ except Exception:  # pragma: no cover
 from dotenv import load_dotenv
 from platformdirs import PlatformDirs
 
-from .utils import ensure_dir
+from .utils import ensure_dir, restrict_permissions
 
 DEFAULT_API_URL = "https://canvas.uva.nl/api/v1"
 
@@ -87,3 +87,5 @@ class AppConfig:
         else:
             with path.open("wb") as f:  # type: ignore
                 f.write(tomli_w.dumps(data).encode("utf-8"))  # type: ignore
+        # The file holds the access token — keep it owner-only.
+        restrict_permissions(path)

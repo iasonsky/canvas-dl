@@ -1,6 +1,8 @@
 # canvas-dl
 
-A user-friendly CLI tool to download files from UVA Canvas courses, featuring secure token management, interactive course selection, and robust downloading with filtering options.
+Download your **files, full course file tree, and assignments** (with instructions
+as PDF) from Canvas — from a friendly **desktop app** or a powerful **CLI**.
+Optionally merge lecture PDFs into one document and zip everything up.
 
 ## Demo
 
@@ -10,257 +12,192 @@ Download all your Canvas course files in seconds 🚀
 
 ## Features
 
-- 🔐 **Secure Authentication**: Local token storage with environment variable support
-- 📚 **Interactive Course Selection**: Browse and select courses with a user-friendly interface
-- 🎯 **Smart Filtering**: Filter files by type, name patterns, and regex
-- ⚡ **Concurrent Downloads**: Configurable parallel downloads with rate limiting
-- 📊 **Rich Output**: Beautiful terminal interface with progress tracking
-- 🛡️ **API Compliance**: Respects Canvas API rate limits and pagination
+- 🖥️ **Desktop GUI** — a simple window for non-technical users (no terminal needed)
+- 📦 **Standalone binaries** — download & run, no Python install required
+- 📚 **Download everything** — module files, the complete course file tree (with
+  folders), and assignments
+- 📝 **Assignment instructions as PDF** — each assignment's description saved as a
+  readable PDF, plus any attached files
+- 🔗 **Merge PDFs** — combine lecture slides per-module or for the whole course
+- 🗜️ **Zip output** — bundle the whole course into a single archive
+- 🔐 **Secure token storage** — local config, `.env`, or environment variables
+- ⚡ **Incremental & polite** — skips unchanged files and respects Canvas rate limits
+- 🎯 **Smart filtering** — by file type, glob, or regex
 
 ## Installation
 
-### Prerequisites
-- Python 3.9 or higher
-- A Canvas access token (see [Getting Your Token](#getting-your-token))
+### Option A — Standalone app (easiest, no Python)
 
-### Install with uv (recommended)
+Download the latest build for your OS from the
+[**Releases**](https://github.com/iasonsky/canvas-dl/releases) page:
+
+- **Windows** — `canvas-dl-windows.zip` → unzip → run `canvas-dl-gui.exe` (GUI) or
+  `canvas-dl.exe` (CLI)
+- **macOS** — `canvas-dl-macos.tar.gz` → extract → run `canvas-dl-gui`
+- **Linux** — `canvas-dl-linux.tar.gz` → extract → run `./canvas-dl-gui`
+
+### Option B — Install from PyPI (for Python users)
 
 ```bash
-# Clone the repository
-git clone <repository-url>
+# with pipx (isolated, recommended)
+pipx install canvas-dl          # CLI only
+pipx install "canvas-dl[gui]"   # CLI + desktop GUI
+
+# or with uv
+uv tool install "canvas-dl[gui]"
+
+# or plain pip
+pip install "canvas-dl[gui]"
+```
+
+### Option C — From source
+
+```bash
+git clone https://github.com/iasonsky/canvas-dl
 cd canvas-dl
-
-# Create virtual environment and install
-uv venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-uv pip install -e .
+uv venv && uv pip install -e ".[gui]"
 ```
 
-### Alternative installation
+## Quick start
+
+1. Get a Canvas access token (see [Getting your token](#getting-your-token)).
+2. Launch the GUI **or** configure the CLI:
 
 ```bash
-pip install -e .
-```
-
-## Quick Start
-
-1. **Get your Canvas access token** (see instructions below)
-2. **Configure the token**:
-   ```bash
-   canvas-dl auth
-   ```
-3. **List your courses**:
-   ```bash
-   canvas-dl courses --published
-   ```
-4. **Download files**:
-   ```bash
-   canvas-dl download --course-id 45952
-   ```
-
-## Getting Your Token
-
-1. Log into your Canvas account at [canvas.uva.nl](https://canvas.uva.nl)
-2. Go to **Settings** → **Approved Integrations**
-3. Click **New Access Token**
-4. Give it a name (e.g., "canvas-dl")
-5. Set an expiration date
-6. Copy the generated token (you won't see it again!)
-
-## Usage
-
-### Authentication
-
-Configure your Canvas access token:
-
-```bash
-canvas-dl auth
-```
-
-You can also set environment variables:
-```bash
-export ACCESS_TOKEN="your-token-here"
-export CANVAS_API_URL="https://canvas.uva.nl/api/v1"  # optional
-```
-
-### Listing Courses
-
-List all your courses:
-```bash
-canvas-dl courses
-```
-
-Show only published courses:
-```bash
+canvas-dl gui          # open the desktop app
+# or
+canvas-dl auth         # save your token for the CLI
 canvas-dl courses --published
+canvas-dl download --course-id 45952     # download everything for a course
 ```
 
-### Downloading Files
+## The desktop GUI
 
-#### Basic Download
-Download all files from a specific course:
+Run `canvas-dl gui` (or launch the `canvas-dl-gui` binary). Paste your token, click
+**Save**, pick a course, choose what to download and where, then hit **Download**.
+Progress and a log are shown live.
+
+```
+┌─ Canvas Downloader ───────────────┐
+│ Token: [••••••••••]      [Save]    │
+│ Course: [ Causality ▼ ]           │
+│ [x] Modules [x] Files [x] Assign. │
+│ Only types: [pdf,ipynb    ]       │
+│ [x] Merge PDFs  [x] Zip output    │
+│ Save to: [ ~/Downloads ] [Browse] │
+│ [ Download ]   ▓▓▓▓▓░░░░ 62%       │
+└───────────────────────────────────┘
+```
+
+## CLI usage
+
 ```bash
+# Download everything (modules + all files + assignments) — the default
 canvas-dl download --course-id 45952
+
+# Only the complete file tree, PDFs only
+canvas-dl download --course-id 45952 --content files --only pdf
+
+# Only assignments (attachments + instructions.pdf)
+canvas-dl download --course-id 45952 --content assignments
+
+# Merge lecture PDFs and zip the result
+canvas-dl download --course-id 45952 --merge --merge-scope both --zip
+
+# Pick a course interactively, filter by name, choose a destination
+canvas-dl download --name "*lecture*" --dest ~/UVA/Causality
 ```
 
-#### Interactive Selection
-Let the tool help you choose a course:
-```bash
-canvas-dl download
+### `--content` sources
+
+| value         | what it grabs                                                        | layout            |
+|---------------|----------------------------------------------------------------------|-------------------|
+| `modules`     | files linked from course modules, organised by module                | `Modules/<module>/` |
+| `files`       | every file in the course, mirroring the Canvas folder tree           | `Files/<folder>/`   |
+| `assignments` | each assignment's attachments + `instructions.pdf`                    | `Assignments/<n - name>/` |
+| `all`         | all of the above (**default**)                                       | all of the above  |
+
+Pass a comma list (e.g. `--content files,assignments`) to combine specific sources.
+
+### Output layout
+
+```
+downloads/
+└── Causality/
+    ├── Modules/
+    │   └── Week 1/lecture1.pdf
+    ├── Files/
+    │   └── Lectures/slides.pdf
+    ├── Assignments/
+    │   └── 01 - Homework 1/
+    │       ├── instructions.pdf
+    │       └── handout.pdf
+    └── Merged/                      # with --merge
+        ├── Week 1.pdf
+        └── Course - all lectures.pdf
 ```
 
-#### Filtering Options
+A file that appears in several places (e.g. in a module *and* an assignment) is
+**downloaded only once** and copied locally — friendly to Canvas's rate limits.
 
-Filter by file types:
-```bash
-canvas-dl download --course-id 45952 --only pdf,ipynb,docx
-```
+## Getting your token
 
-Filter by name pattern (glob):
-```bash
-canvas-dl download --course-id 45952 --name "*lecture*"
-```
-
-Filter by regex:
-```bash
-canvas-dl download --course-id 45952 --regex ".*assignment.*"
-```
-
-#### Custom Settings
-
-Set destination directory:
-```bash
-canvas-dl download --course-id 45952 --dest ~/UVA/Causality
-```
-
-Configure concurrent downloads:
-```bash
-canvas-dl download --course-id 45952 --concurrency 4
-```
-
-#### Advanced Examples
-
-Download only PDF lectures to a specific folder:
-```bash
-canvas-dl download --course-id 45952 --only pdf --name "*lecture*" --dest ~/UVA/Lectures
-```
-
-Download with custom API URL:
-```bash
-canvas-dl download --course-id 45952 --api-url "https://your-canvas-instance.com/api/v1"
-```
-
-## Command Reference
-
-### `canvas-dl auth`
-Configure your Canvas access token interactively.
-
-**Options:**
-- `--api-url`: Canvas API base URL (default: https://canvas.uva.nl/api/v1)
-
-### `canvas-dl courses`
-List your Canvas courses in a table format.
-
-**Options:**
-- `--published`: Only show published courses
-- `--api-url`: Override API URL
-- `--token`: Override access token
-
-### `canvas-dl download`
-Download files from a Canvas course.
-
-**Options:**
-- `--course-id`: Course ID to download (if not provided, interactive selection)
-- `--dest`: Destination directory (default: ./downloads)
-- `--only`: Filter by file types (comma-separated, e.g., pdf,ipynb)
-- `--name`: Filter by name pattern (glob syntax)
-- `--regex`: Filter by name pattern (regex)
-- `--concurrency`: Number of concurrent downloads
-- `--api-url`: Override API URL
-- `--token`: Override access token
-
-### `canvas-dl version`
-Show the current version.
-
-### `canvas-dl help`
-Show detailed help information.
+1. Log into Canvas → **Account** → **Settings**.
+2. Under **Approved Integrations**, click **+ New Access Token**.
+3. Give it a name, (optionally) an expiry, and **Generate Token**.
+4. Copy it (you won't see it again) and paste it into the GUI or `canvas-dl auth`.
 
 ## Configuration
 
-### Environment Variables
-- `ACCESS_TOKEN`: Your Canvas access token
-- `CANVAS_API_URL`: Canvas API base URL (optional)
+Token & settings are read from (in order): command-line flags → environment →
+`.env` in the current directory → the config file.
 
-### Config File
-The tool stores configuration in a local file. The location varies by platform:
-- **macOS**: `~/Library/Application Support/canvas-dl/config.toml`
-- **Linux**: `~/.config/canvas-dl/config.toml`
-- **Windows**: `%APPDATA%\canvas-dl\config.toml`
+- **Environment variables:** `ACCESS_TOKEN`, `API_URL`
+- **Config file:**
+  - macOS: `~/Library/Application Support/canvas-dl/config.toml`
+  - Linux: `~/.config/canvas-dl/config.toml`
+  - Windows: `%LOCALAPPDATA%\canvas-dl\config.toml`
 
-## File Organization
+The default Canvas instance is `https://canvas.uva.nl/api/v1`; override with
+`--api-url` or `API_URL`.
 
-Downloaded files are organized as follows:
-```
-downloads/
-└── Course Name/
-    ├── Module 1/
-    │   ├── lecture1.pdf
-    │   └── assignment1.ipynb
-    └── Module 2/
-        ├── lecture2.pdf
-        └── slides.pptx
-```
+## Notes & troubleshooting
 
-## Troubleshooting
+- **"Course Files area is restricted for your account"** — some courses hide the
+  bulk Files tab from students, so `--content files` can't enumerate them. The
+  tool automatically falls back to module/assignment files, which still works.
+- **Rate limits** — Canvas throttles per token. canvas-dl makes metadata calls
+  sequentially with a small delay and downloads file content with modest
+  concurrency, so you're very unlikely to be throttled. If you ever are, just
+  re-run — completed files are skipped.
+- **Assignment instructions** are rendered with a built-in PDF engine (no native
+  dependencies). Embedded images are omitted; if a description can't be rendered
+  to PDF it's saved as `instructions.html` instead.
 
-### Common Issues
+## Roadmap
 
-**"Missing access token" error**
-- Run `canvas-dl auth` to configure your token
-- Or set the `ACCESS_TOKEN` environment variable
-
-**"Error listing courses" error**
-- Check your internet connection
-- Verify your access token is valid
-- Ensure you have access to the Canvas instance
-
-**Download fails**
-- Check available disk space
-- Verify file permissions in destination directory
-- Try reducing concurrency with `--concurrency 1`
-
-### Getting Help
-
-For detailed help:
-```bash
-canvas-dl help
-```
-
-For command-specific help:
-```bash
-canvas-dl <command> --help
-```
+- ☁️ **Save to Google Drive / other cloud storage** (planned follow-up)
 
 ## Development
 
-### Setup Development Environment
 ```bash
-git clone <repository-url>
-cd canvas-dl
-uv venv
-source .venv/bin/activate
-uv pip install -e ".[dev]"
+uv venv && uv pip install -e ".[dev]"
+pytest -q
 ```
 
-### Running Tests
+### Building the standalone binaries
+
 ```bash
-pytest
+# Linux/macOS
+./scripts/build_binaries.sh
+# Windows (PowerShell)
+./scripts/build_binaries.ps1
 ```
+
+Outputs land in `dist/` (`canvas-dl` one-file CLI, `canvas-dl-gui/` GUI folder).
+CI builds these for all three OSes and attaches them to a GitHub Release on each
+`v*` tag (see `.github/workflows/release.yml`).
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
+MIT — see [LICENSE](LICENSE).
