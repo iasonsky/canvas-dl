@@ -46,15 +46,18 @@ Download the latest build for your OS from the
 
 ```bash
 # with pipx (isolated, recommended)
-pipx install canvas-dl          # CLI only
-pipx install "canvas-dl[gui]"   # CLI + desktop GUI
+pipx install canvas-course-dl          # CLI only
+pipx install "canvas-course-dl[gui]"   # CLI + desktop GUI
 
 # or with uv
-uv tool install "canvas-dl[gui]"
+uv tool install "canvas-course-dl[gui]"
 
 # or plain pip
-pip install "canvas-dl[gui]"
+pip install "canvas-course-dl[gui]"
 ```
+
+The installed commands are still `canvas-dl` and `canvas-dl-gui` — only the
+package name on PyPI differs.
 
 ### Option C — From source
 

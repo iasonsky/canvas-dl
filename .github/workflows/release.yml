@@ -97,7 +97,7 @@ jobs:
     if: ${{ vars.PUBLISH_TO_PYPI == 'true' }}
     environment:
       name: pypi
-      url: https://pypi.org/p/canvas-dl
+      url: https://pypi.org/p/canvas-course-dl
     permissions:
       id-token: write
     steps:
