@@ -1,5 +1,11 @@
 # canvas-dl
 
+[![CI](https://github.com/iasonsky/canvas-dl/actions/workflows/ci.yml/badge.svg)](https://github.com/iasonsky/canvas-dl/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/iasonsky/canvas-dl)](https://github.com/iasonsky/canvas-dl/releases)
+[![Downloads](https://img.shields.io/github/downloads/iasonsky/canvas-dl/total)](https://github.com/iasonsky/canvas-dl/releases)
+[![License](https://img.shields.io/github/license/iasonsky/canvas-dl)](LICENSE)
+![Python](https://img.shields.io/badge/python-3.9%2B-blue)
+
 Download your **files, full course file tree, and assignments** (with instructions
 as PDF) from Canvas — from a friendly **desktop app** or a powerful **CLI**.
 Optionally merge lecture PDFs into one document and zip everything up.
