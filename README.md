@@ -1,6 +1,7 @@
 # canvas-dl
 
 [![CI](https://github.com/iasonsky/canvas-dl/actions/workflows/ci.yml/badge.svg)](https://github.com/iasonsky/canvas-dl/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/canvas-course-dl)](https://pypi.org/project/canvas-course-dl/)
 [![Release](https://img.shields.io/github/v/release/iasonsky/canvas-dl)](https://github.com/iasonsky/canvas-dl/releases)
 [![Downloads](https://img.shields.io/github/downloads/iasonsky/canvas-dl/total)](https://github.com/iasonsky/canvas-dl/releases)
 [![License](https://img.shields.io/github/license/iasonsky/canvas-dl)](LICENSE)
