@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "canvas-course-dl"
-version = "0.2.0"
+version = "0.2.1"
 description = "Download files, folders and assignments from Canvas — CLI and desktop GUI"
 readme = "README.md"
 license = { file = "LICENSE" }
